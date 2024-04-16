@@ -24,14 +24,13 @@ def generate_launch_description():
             launch_arguments={'use_sim_time': 'true'}.items()
     )
 
-    # Include the Gazebo launch file, provided by the gazebo_ros package
+    gazebo_params_path = os.path.join(
+                  get_package_share_directory(package_name),'config','gazebo_params.yaml')
+
     gazebo = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [
-                    os.path.join(
-                        get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')
-                    ]
-                ),
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
+            launch_arguments={'extra_gazebo_args': '--ros-args --params-file ' + gazebo_params_path }.items()
     )
 
     # Run the spawner node from the gazebo_ros package. The entity name doesn't
@@ -41,9 +40,23 @@ def generate_launch_description():
                                    '-entity', 'artebot'],
                         output='screen')
 
+    diff_drive_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_cont"],
+    )
+
+    joint_broad_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_broad"],
+    )
+
     # Launch them all!
     return LaunchDescription([
         rsp,
         gazebo,
         spawn_entity,
+        diff_drive_spawner,
+        joint_broad_spawner
     ])
